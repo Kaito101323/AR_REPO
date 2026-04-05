@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hair Color Studio</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@700&display=swap');
+
+  :root {
+    --bg: #0b0c10;
+    --panel: #13151a;
+    --panel2: #1a1d24;
+    --border: #2a2d35;
+    --accent: #c8a96e;
+    --accent2: #e8c990;
+    --text: #e8e8ea;
+    --muted: #6b7080;
+    --radius: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  header {
+    width: 100%;
+    padding: 24px 40px 0;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  header span {
+    font-size: 0.8rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .main-layout {
+    display: flex;
+    gap: 24px;
+    padding: 24px 40px 40px;
+    width: 100%;
+    max-width: 1280px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .video-section {
+    flex: 1 1 640px;
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .canvas-wrap {
+    position: relative;
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: #000;
+    aspect-ratio: 4/3;
+    border: 1px solid var(--border);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+  }
+
+  #video {
+    position: absolute;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #canvas {
+    position: absolute;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+  }
+
+  .overlay-ui {
+    position: absolute;
+    top: 14px; left: 14px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    z-index: 10;
+  }
+
+  .badge {
+    background: rgba(11,12,16,0.82);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 40px;
+    padding: 5px 12px;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #555;
+    transition: background 0.3s;
+  }
+  .dot.live { background: #4ade80; animation: pulse 1.8s infinite; }
+  .dot.loading { background: var(--accent); animation: pulse 0.7s infinite; }
+  .dot.error { background: #f87171; }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; } 50% { opacity: 0.3; }
+  }
+
+  #fps-badge {
+    background: rgba(11,12,16,0.82);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 40px;
+    padding: 5px 12px;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .start-prompt {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background: rgba(11,12,16,0.88);
+    backdrop-filter: blur(4px);
+    z-index: 20;
+    transition: opacity 0.4s;
+  }
+  .start-prompt.hidden { opacity: 0; pointer-events: none; }
+
+  .start-prompt p {
+    font-size: 0.9rem;
+    color: var(--muted);
+    text-align: center;
+    max-width: 240px;
+    line-height: 1.6;
+  }
+
+  .btn-start {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #0b0c10;
+    border: none;
+    border-radius: 40px;
+    padding: 12px 30px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-start:hover { transform: scale(1.04); box-shadow: 0 8px 24px rgba(200,169,110,0.32); }
+  .btn-start:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .controls {
+    flex: 0 0 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding-top: 4px;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+
+  .card-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .swatch-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .swatch {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2.5px solid transparent;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .swatch:hover { transform: scale(1.15); }
+  .swatch.active { border-color: #fff; transform: scale(1.15); }
+
+  .custom-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .custom-row label { font-size: 0.8rem; color: var(--muted); flex: 1; }
+
+  input[type="color"] {
+    width: 36px; height: 36px;
+    border: none; border-radius: 8px;
+    cursor: pointer; background: none; padding: 0;
+  }
+
+  .slider-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .slider-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .slider-label span:last-child { color: var(--text); font-weight: 500; }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%; height: 4px;
+    border-radius: 4px;
+    background: var(--border);
+    outline: none; cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid #0b0c10;
+    box-shadow: 0 0 0 1px var(--accent);
+    transition: transform 0.1s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
+
+  .mode-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .mode-btn {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 10px;
+    padding: 9px 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .mode-btn:hover { border-color: var(--accent); color: var(--text); }
+  .mode-btn.active {
+    background: rgba(200,169,110,0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .toggle { position: relative; width: 42px; height: 24px; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; inset: 0;
+    background: var(--border);
+    border-radius: 24px; cursor: pointer; transition: 0.3s;
+  }
+  .toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 18px; height: 18px;
+    left: 3px; top: 3px;
+    background: #fff; border-radius: 50%; transition: 0.3s;
+  }
+  .toggle input:checked + .toggle-slider { background: var(--accent); }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+  .btn-capture {
+    width: 100%;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 12px;
+    padding: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+  .btn-capture:hover { border-color: var(--accent); color: var(--accent); }
+
+  #loadingModel {
+    position: fixed; inset: 0;
+    background: rgba(11,12,16,0.96);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    z-index: 100;
+    transition: opacity 0.5s;
+  }
+  #loadingModel.gone { opacity: 0; pointer-events: none; }
+
+  #loadingModel h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .loading-bar-wrap {
+    width: 240px; height: 3px;
+    background: var(--border);
+    border-radius: 3px; overflow: hidden;
+  }
+  .loading-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 3px;
+    animation: loadbar 2.2s ease-in-out infinite;
+  }
+  @keyframes loadbar {
+    0% { width: 0%; margin-left: 0; }
+    50% { width: 60%; margin-left: 20%; }
+    100% { width: 0%; margin-left: 100%; }
+  }
+
+  #loadStatus {
+    font-size: 0.82rem;
+    color: var(--muted);
+    max-width: 320px;
+    text-align: center;
+    line-height: 1.5;
+  }
+  #loadStatus.err { color: #f87171; }
+</style>
+</head>
+<body>
+
+<div id="loadingModel">
+  <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+    <circle cx="24" cy="24" r="20" stroke="#2a2d35" stroke-width="2"/>
+    <path d="M14 18 C14 12 34 12 34 18 C34 28 26 32 24 34 C22 32 14 28 14 18Z" fill="none" stroke="#c8a96e" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M18 17 C20 13 28 13 30 17" stroke="#c8a96e" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>
+  <h2>Hair Color Studio</h2>
+  <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+  <p id="loadStatus">Loading AI segmentation model…</p>
+</div>
+
+<header>
+  <h1>Hair Color Studio</h1>
+  <span>Powered by MediaPipe</span>
+</header>
+
+<div class="main-layout">
+
+  <div class="video-section">
+    <div class="canvas-wrap">
+      <video id="video" autoplay muted playsinline></video>
+      <canvas id="canvas"></canvas>
+
+      <div class="start-prompt" id="startPrompt">
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none" opacity=".4">
+          <circle cx="26" cy="20" r="10" stroke="#e8e8ea" stroke-width="1.5"/>
+          <path d="M8 46 C8 34 44 34 44 46" stroke="#e8e8ea" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <p>Allow camera access to try real-time AI hair color changing</p>
+        <button class="btn-start" id="btnStart" disabled>Enable Camera</button>
+      </div>
+
+      <div class="overlay-ui">
+        <div class="badge"><span class="dot" id="statusDot"></span><span id="statusText">Loading</span></div>
+        <div id="fps-badge">-- fps</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+
+    <div class="card">
+      <div class="card-title">Hair Color</div>
+      <div class="swatch-grid" id="swatchGrid"></div>
+      <div class="custom-row">
+        <label>Custom color</label>
+        <input type="color" id="customColor" value="#e65c9c" />
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Adjustments</div>
+      <div class="slider-row">
+        <div class="slider-label"><span>Opacity</span><span id="opVal">65%</span></div>
+        <input type="range" id="opacity" min="10" max="100" value="65">
+      </div>
+      <div class="slider-row">
+        <div class="slider-label"><span>Edge Softness</span><span id="blurVal">3px</span></div>
+        <input type="range" id="blurRadius" min="0" max="12" value="3">
+      </div>
+      <div class="slider-row">
+        <div class="slider-label"><span>Threshold</span><span id="thrVal">0.25</span></div>
+        <input type="range" id="threshold" min="5" max="80" value="25">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Blend Mode</div>
+      <div class="mode-grid" id="modeGrid">
+        <button class="mode-btn active" data-mode="color">Color</button>
+        <button class="mode-btn" data-mode="multiply">Multiply</button>
+        <button class="mode-btn" data-mode="overlay">Overlay</button>
+        <button class="mode-btn" data-mode="screen">Screen</button>
+        <button class="mode-btn" data-mode="hue">Hue</button>
+        <button class="mode-btn" data-mode="luminosity">Luminosity</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Options</div>
+      <div class="toggle-row">
+        <span>Mirror video</span>
+        <label class="toggle">
+          <input type="checkbox" id="mirrorToggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <span>Show split view</span>
+        <label class="toggle">
+          <input type="checkbox" id="showSplit">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <button class="btn-capture" id="btnCapture">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="13" r="4"/><path d="M5 7h2l2-2h6l2 2h2a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/></svg>
+        Save Screenshot
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script type="module">
+// ─────────────────────────────────────────────
+//  Imports — pinned stable version
+// ─────────────────────────────────────────────
+import { ImageSegmenter, FilesetResolver }
+  from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm';
+
+// selfie_multiclass_256x256 outputs 6 confidence masks:
+//  0=background  1=hair  2=body-skin  3=face-skin  4=clothes  5=others
+const WASM_URL  = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm';
+const MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite';
+const HAIR_IDX  = 1;
+
+// ─────────────────────────────────────────────
+//  State
+// ─────────────────────────────────────────────
+let segmenter     = null;
+let cameraRunning = false;
+let isProcessing  = false;
+let currentColor  = { r: 230, g: 92, b: 156 };
+let opacity       = 0.65;
+let blurPx        = 3;
+let threshold     = 0.25;
+let blendMode     = 'color';
+let showSplit     = false;
+let mirror        = true;
+let lastTs        = 0;
+let fpsArr        = [];
+let offCanvas     = null, offCtx = null;
+
+// ─────────────────────────────────────────────
+//  DOM refs
+// ─────────────────────────────────────────────
+const video      = document.getElementById('video');
+const canvas     = document.getElementById('canvas');
+const ctx        = canvas.getContext('2d');
+const statusDot  = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const fpsBadge   = document.getElementById('fps-badge');
+const loadStatus = document.getElementById('loadStatus');
+
+// ─────────────────────────────────────────────
+//  Preset swatches
+// ─────────────────────────────────────────────
+const PRESETS = [
+  { hex:'#1a0a00', label:'Ebony' },       { hex:'#3b1a08', label:'Espresso' },
+  { hex:'#6b3a1f', label:'Chestnut' },    { hex:'#c47c3e', label:'Caramel' },
+  { hex:'#f5c878', label:'Honey Blonde' },{ hex:'#e8e0c8', label:'Platinum' },
+  { hex:'#c0392b', label:'Cherry Red' },  { hex:'#e07b39', label:'Copper' },
+  { hex:'#8b5cf6', label:'Violet' },      { hex:'#3b82f6', label:'Electric Blue' },
+  { hex:'#e65c9c', label:'Pink' },        { hex:'#10b981', label:'Emerald' },
+  { hex:'#f59e0b', label:'Golden' },      { hex:'#ec4899', label:'Hot Pink' },
+  { hex:'#f97316', label:'Sunset' },
+];
+
+function hexToRgb(hex) {
+  const n = parseInt(hex.replace('#',''), 16);
+  return { r:(n>>16)&255, g:(n>>8)&255, b:n&255 };
+}
+
+const swatchGrid = document.getElementById('swatchGrid');
+PRESETS.forEach((p, i) => {
+  const s = document.createElement('div');
+  s.className = 'swatch' + (i === 10 ? ' active' : '');
+  s.style.background = p.hex;
+  s.title = p.label;
+  s.addEventListener('click', () => {
+    document.querySelectorAll('.swatch').forEach(x => x.classList.remove('active'));
+    s.classList.add('active');
+    currentColor = hexToRgb(p.hex);
+    document.getElementById('customColor').value = p.hex;
+  });
+  swatchGrid.appendChild(s);
+});
+
+document.getElementById('customColor').addEventListener('input', e => {
+  currentColor = hexToRgb(e.target.value);
+  document.querySelectorAll('.swatch').forEach(x => x.classList.remove('active'));
+});
+
+// ─────────────────────────────────────────────
+//  Controls
+// ─────────────────────────────────────────────
+document.getElementById('opacity').addEventListener('input', e => {
+  opacity = e.target.value / 100;
+  document.getElementById('opVal').textContent = e.target.value + '%';
+});
+document.getElementById('blurRadius').addEventListener('input', e => {
+  blurPx = parseInt(e.target.value);
+  document.getElementById('blurVal').textContent = e.target.value + 'px';
+});
+document.getElementById('threshold').addEventListener('input', e => {
+  threshold = e.target.value / 100;
+  document.getElementById('thrVal').textContent = (e.target.value/100).toFixed(2);
+});
+document.getElementById('modeGrid').addEventListener('click', e => {
+  const btn = e.target.closest('.mode-btn');
+  if (!btn) return;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  blendMode = btn.dataset.mode;
+});
+document.getElementById('mirrorToggle').addEventListener('change', e => {
+  mirror = e.target.checked;
+  canvas.style.transform = mirror ? 'scaleX(-1)' : 'scaleX(1)';
+});
+document.getElementById('showSplit').addEventListener('change', e => {
+  showSplit = e.target.checked;
+});
+document.getElementById('btnCapture').addEventListener('click', () => {
+  const snap = document.createElement('canvas');
+  snap.width = canvas.width; snap.height = canvas.height;
+  const sc = snap.getContext('2d');
+  if (mirror) { sc.translate(canvas.width,0); sc.scale(-1,1); }
+  sc.drawImage(canvas,0,0);
+  const a = document.createElement('a');
+  a.download = 'hair-color-' + Date.now() + '.png';
+  a.href = snap.toDataURL('image/png');
+  a.click();
+});
+
+// ─────────────────────────────────────────────
+//  Load model
+// ─────────────────────────────────────────────
+async function loadModel() {
+  try {
+    loadStatus.textContent = 'Initialising WASM runtime…';
+    const fileset = await FilesetResolver.forVisionTasks(WASM_URL);
+
+    loadStatus.textContent = 'Downloading segmentation model (~16 MB, first time only)…';
+
+    // Try GPU delegate first, fall back silently to CPU
+    for (const delegate of ['GPU', 'CPU']) {
+      try {
+        segmenter = await ImageSegmenter.createFromOptions(fileset, {
+          baseOptions: { modelAssetPath: MODEL_URL, delegate },
+          runningMode: 'VIDEO',
+          outputCategoryMask: false,
+          outputConfidenceMasks: true,
+        });
+        console.log('[HairStudio] Loaded with delegate:', delegate);
+        break;
+      } catch (e) {
+        console.warn('[HairStudio] delegate', delegate, 'failed:', e.message);
+      }
+    }
+
+    if (!segmenter) throw new Error('Could not create segmenter on any delegate.');
+
+    document.getElementById('loadingModel').classList.add('gone');
+    document.getElementById('btnStart').disabled = false;
+    statusText.textContent = 'Ready';
+
+  } catch (err) {
+    console.error(err);
+    loadStatus.textContent = '⚠ Load failed: ' + err.message +
+      '\n\nMake sure you are using Chrome/Edge and have an internet connection.';
+    loadStatus.classList.add('err');
+    statusDot.className = 'dot error';
+    statusText.textContent = 'Error';
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Camera start
+// ─────────────────────────────────────────────
+document.getElementById('btnStart').addEventListener('click', async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }
+    });
+    video.srcObject = stream;
+    await new Promise(r => { video.onloadedmetadata = r; });
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    document.getElementById('startPrompt').classList.add('hidden');
+    statusDot.className = 'dot loading';
+    statusText.textContent = 'Initialising';
+    cameraRunning = true;
+    requestAnimationFrame(renderLoop);
+  } catch (err) {
+    alert('Camera error: ' + err.message);
+  }
+});
+
+// ─────────────────────────────────────────────
+//  Render loop
+// ─────────────────────────────────────────────
+function renderLoop(ts) {
+  if (!cameraRunning) return;
+  if (video.readyState < 2) { requestAnimationFrame(renderLoop); return; }
+
+  // FPS
+  if (lastTs) {
+    fpsArr.push(1000 / (ts - lastTs));
+    if (fpsArr.length > 24) fpsArr.shift();
+    const fps = Math.round(fpsArr.reduce((a,b) => a+b, 0) / fpsArr.length);
+    fpsBadge.textContent = fps + ' fps';
+  }
+  lastTs = ts;
+
+  if (!isProcessing) {
+    isProcessing = true;
+    try {
+      segmenter.segmentForVideo(video, ts, onResult);
+    } catch(e) {
+      isProcessing = false;
+      console.error('segmentForVideo error:', e);
+    }
+  }
+
+  requestAnimationFrame(renderLoop);
+}
+
+// ─────────────────────────────────────────────
+//  Segmentation result handler
+// ─────────────────────────────────────────────
+function onResult(result) {
+  isProcessing = false;
+
+  const w = canvas.width, h = canvas.height;
+
+  // Draw the video frame
+  ctx.drawImage(video, 0, 0, w, h);
+
+  if (!result || !result.confidenceMasks || result.confidenceMasks.length <= HAIR_IDX) {
+    result && result.close && result.close();
+    return;
+  }
+
+  statusDot.className = 'dot live';
+  statusText.textContent = 'Live';
+
+  // Hair confidence mask — Float32Array, values 0..1, length = w*h
+  const maskF32 = result.confidenceMasks[HAIR_IDX].getAsFloat32Array();
+
+  // Reuse offscreen canvas
+  if (!offCanvas || offCanvas.width !== w || offCanvas.height !== h) {
+    offCanvas = document.createElement('canvas');
+    offCanvas.width = w; offCanvas.height = h;
+    offCtx = offCanvas.getContext('2d');
+  }
+
+  // Build RGBA hair-color overlay
+  const imgData = offCtx.createImageData(w, h);
+  const px = imgData.data;
+  const { r, g, b } = currentColor;
+  const splitX = showSplit ? Math.floor(w / 2) : w;
+
+  for (let i = 0; i < maskF32.length; i++) {
+    const conf = maskF32[i];
+    if (conf < threshold) continue;
+    if (showSplit && (i % w) < splitX) continue; // right half only in split mode
+
+    const alpha = Math.min(1, (conf - threshold) / Math.max(0.001, 1 - threshold)) * opacity;
+    const base = i * 4;
+    px[base]     = r;
+    px[base + 1] = g;
+    px[base + 2] = b;
+    px[base + 3] = Math.round(alpha * 255);
+  }
+
+  offCtx.putImageData(imgData, 0, 0);
+
+  // Feather edges with blur
+  if (blurPx > 0) {
+    const tmp = document.createElement('canvas');
+    tmp.width = w; tmp.height = h;
+    const tc = tmp.getContext('2d');
+    tc.filter = `blur(${blurPx}px)`;
+    tc.drawImage(offCanvas, 0, 0);
+    offCtx.clearRect(0, 0, w, h);
+    offCtx.drawImage(tmp, 0, 0);
+  }
+
+  // Composite hair color over video
+  ctx.save();
+  ctx.globalCompositeOperation = blendMode;
+  ctx.drawImage(offCanvas, 0, 0);
+  ctx.restore();
+
+  // Split-view divider line
+  if (showSplit) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 6]);
+    ctx.beginPath();
+    ctx.moveTo(splitX, 0);
+    ctx.lineTo(splitX, h);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  result.close();
+}
+
+// ─────────────────────────────────────────────
+//  Boot
+// ─────────────────────────────────────────────
+loadModel();
+</script>
+</body>
+</html>

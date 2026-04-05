@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fadestreet Hair Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0b0f;--s1:#111118;--s2:#18181f;--s3:#22222c;--red:#c8102e;--red2:#e8274a;--navy:#0d1f44;--navy2:#1a3a6e;--white:#f2ede6;--off:#b8b2a8;--muted:#5a5868;--r:12px;--stripe:repeating-linear-gradient(90deg,var(--red) 0 18px,#fff 18px 26px,var(--navy) 26px 44px,#fff 44px 52px);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--white);font-family:'Outfit',sans-serif;}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .45s ease;overflow:hidden;}
+.screen.active{opacity:1;pointer-events:all;}
+.stripe{width:100%;height:5px;background:var(--stripe);position:absolute;top:0;left:0;}
+#s-welcome{background:radial-gradient(ellipse 80% 60% at 50% 30%,#1a0a10 0%,var(--bg) 70%);}
+.welcome-pole{display:flex;flex-direction:column;width:22px;height:80px;border-radius:5px;overflow:hidden;margin-bottom:24px;box-shadow:0 0 32px rgba(200,16,46,.35);}
+.welcome-pole span{flex:1;}
+.logo-word{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,8vw,5.5rem);letter-spacing:6px;line-height:1;color:var(--white);}
+.logo-word em{color:var(--red);font-style:normal;}
+.tagline{font-size:.95rem;font-weight:300;color:var(--off);letter-spacing:3px;text-transform:uppercase;margin-top:10px;margin-bottom:48px;}
+.btn-start{padding:16px 56px;background:var(--red);color:#fff;border:none;border-radius:50px;font-family:'Outfit',sans-serif;font-size:1rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:transform .15s,box-shadow .3s,background .2s;position:relative;overflow:hidden;}
+.btn-start::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);border-radius:inherit;}
+.btn-start:hover{background:var(--red2);transform:scale(1.04);box-shadow:0 0 40px rgba(200,16,46,.45);}
+.btn-start:active{transform:scale(.97);}
+.deco-scissors{position:absolute;bottom:60px;right:60px;font-size:3rem;opacity:.06;transform:rotate(-30deg);pointer-events:none;}
+#s-scan{background:var(--bg);}
+.scan-header{position:absolute;top:0;left:0;right:0;padding:20px 28px 16px;display:flex;align-items:center;gap:10px;background:var(--s1);border-bottom:1px solid rgba(255,255,255,.05);}
+.scan-step-label{font-size:.65rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted);}
+.scan-step-title{font-size:1rem;font-weight:600;color:var(--white);margin-top:1px;}
+.scan-body{display:flex;flex-direction:column;align-items:center;gap:20px;padding-top:80px;width:100%;max-width:680px;}
+.cam-frame{position:relative;width:min(480px,90vw);aspect-ratio:4/3;border-radius:var(--r);overflow:hidden;background:#000;box-shadow:0 0 0 1px rgba(200,16,46,.2),0 24px 60px rgba(0,0,0,.7);}
+#scanVideo,#scanCanvas{position:absolute;inset:0;width:100%;height:100%;}
+#scanVideo{opacity:0;}
+.face-oval{position:absolute;top:50%;left:50%;transform:translate(-50%,-52%);width:52%;aspect-ratio:.72;border:2px solid rgba(200,16,46,.35);border-radius:50%;pointer-events:none;transition:border-color .4s;}
+.face-oval.locked{border-color:rgba(76,175,125,.8);box-shadow:0 0 20px rgba(76,175,125,.15);animation:ovalPulse 1s ease-in-out 3;}
+@keyframes ovalPulse{0%,100%{box-shadow:0 0 20px rgba(76,175,125,.15);}50%{box-shadow:0 0 40px rgba(76,175,125,.35);}}
+.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(200,16,46,.8),transparent);top:0;opacity:0;}
+.scan-line.active{opacity:1;animation:scanSweep 1.8s ease-in-out infinite;}
+@keyframes scanSweep{0%{top:10%;}100%{top:90%;}}
+.br{position:absolute;width:20px;height:20px;border-color:var(--red);border-style:solid;opacity:.6;}
+.br.tl{top:10px;left:10px;border-width:2px 0 0 2px;}
+.br.tr{top:10px;right:10px;border-width:2px 2px 0 0;}
+.br.bl{bottom:10px;left:10px;border-width:0 0 2px 2px;}
+.br.br2{bottom:10px;right:10px;border-width:0 2px 2px 0;}
+.scan-progress-wrap{width:min(480px,90vw);}
+.scan-prog-label{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:8px;letter-spacing:.5px;}
+.scan-prog-track{height:4px;background:var(--s3);border-radius:2px;overflow:hidden;}
+.scan-prog-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--red),var(--red2));border-radius:2px;transition:width .15s ease;}
+.scan-hint{font-size:.82rem;color:var(--muted);text-align:center;}
+#s-reveal{background:radial-gradient(ellipse 70% 50% at 50% 40%,#150508 0%,var(--bg) 65%);}
+.reveal-card{display:flex;flex-direction:column;align-items:center;gap:0;text-align:center;animation:revealIn .6s cubic-bezier(.34,1.56,.64,1) both;}
+@keyframes revealIn{from{opacity:0;transform:scale(.8) translateY(20px);}to{opacity:1;transform:none;}}
+.reveal-scan-label{font-size:.62rem;letter-spacing:4px;text-transform:uppercase;color:var(--red);font-weight:700;margin-bottom:18px;animation:fadeSlideUp .5s .1s both;}
+.reveal-shape-name{font-family:'Bebas Neue',sans-serif;font-size:clamp(4rem,14vw,8rem);letter-spacing:4px;line-height:1;color:var(--white);animation:fadeSlideUp .5s .25s both;}
+.reveal-shape-sub{font-size:.88rem;font-weight:300;color:var(--off);max-width:340px;line-height:1.6;margin-top:14px;animation:fadeSlideUp .5s .4s both;}
+.reveal-traits{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;justify-content:center;animation:fadeSlideUp .5s .55s both;}
+.trait-pill{padding:5px 14px;background:rgba(200,16,46,.12);border:1px solid rgba(200,16,46,.3);border-radius:20px;font-size:.72rem;color:var(--off);letter-spacing:.5px;}
+.reveal-cta{margin-top:36px;padding:14px 48px;background:var(--red);color:#fff;border:none;border-radius:50px;font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:600;letter-spacing:.5px;cursor:pointer;transition:background .2s,transform .1s,box-shadow .3s;animation:fadeSlideUp .5s .7s both;}
+.reveal-cta:hover{background:var(--red2);transform:scale(1.04);box-shadow:0 0 30px rgba(200,16,46,.4);}
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:none;}}
+#s-category{background:radial-gradient(ellipse 80% 50% at 50% 30%,#0d1020 0%,var(--bg) 65%);}
+.cat-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(2rem,6vw,3.2rem);letter-spacing:4px;color:var(--white);margin-bottom:6px;text-align:center;}
+.cat-sub{font-size:.85rem;color:var(--muted);text-align:center;margin-bottom:40px;}
+.cat-grid{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;max-width:720px;}
+.cat-card{width:200px;background:var(--s2);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:32px 20px 28px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:14px;transition:border-color .2s,transform .2s,box-shadow .2s;position:relative;overflow:hidden;}
+.cat-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(200,16,46,.06),transparent);opacity:0;transition:opacity .2s;}
+.cat-card:hover{border-color:rgba(200,16,46,.5);transform:translateY(-6px);box-shadow:0 16px 40px rgba(200,16,46,.12);}
+.cat-card:hover::before{opacity:1;}
+.cat-icon{font-size:2.4rem;line-height:1;}
+.cat-name{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:var(--white);}
+.cat-desc{font-size:.74rem;color:var(--muted);text-align:center;line-height:1.5;}
+#s-tryon{flex-direction:column;align-items:stretch;overflow:hidden;justify-content:flex-start;}
+.tryon-header{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:var(--s1);border-bottom:1px solid rgba(255,255,255,.05);}
+.tryon-back{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted);cursor:pointer;transition:color .15s;border:none;background:none;padding:0;}
+.tryon-back:hover{color:var(--white);}
+.tryon-shape-chip{display:flex;align-items:center;gap:7px;padding:4px 14px;background:rgba(200,16,46,.1);border:1px solid rgba(200,16,46,.3);border-radius:20px;font-size:.68rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--red);}
+.tryon-logo{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:3px;color:var(--white);}
+.tryon-logo em{color:var(--red);font-style:normal;}
+.tryon-cam-wrap{flex-shrink:0;position:relative;width:min(640px,90vw);aspect-ratio:4/3;margin:14px auto;background:#000;border-radius:var(--r);overflow:hidden;box-shadow:0 0 0 1px rgba(200,16,46,.2),0 24px 60px rgba(0,0,0,.7);}
+#tryonVideo{display:none;}
+#tryonCanvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.cam-hud{position:absolute;top:10px;left:10px;background:rgba(13,31,68,.75);border:1px solid rgba(200,16,46,.35);border-radius:7px;padding:4px 12px;font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:#ff6680;font-weight:700;backdrop-filter:blur(6px);pointer-events:none;}
+.tryon-panel{flex:1;overflow-y:auto;background:var(--s1);padding:16px 16px 32px;display:flex;flex-direction:column;gap:16px;}
+.tryon-panel::-webkit-scrollbar{width:4px;}
+.tryon-panel::-webkit-scrollbar-thumb{background:var(--s3);border-radius:2px;}
+.tryon-tabs{display:flex;gap:6px;background:var(--s2);border-radius:50px;padding:5px;border:1px solid rgba(255,255,255,.06);align-self:center;}
+.ttab{padding:7px 20px;border:none;border-radius:50px;background:transparent;color:var(--muted);font-family:'Outfit',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;transition:all .2s;}
+.ttab.active{background:var(--red);color:#fff;}
+.ttab:not(.active):hover{color:var(--white);}
+.section-lbl{font-size:.6rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);}
+.style-scroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;}
+.style-scroll::-webkit-scrollbar{height:3px;}
+.style-scroll::-webkit-scrollbar-thumb{background:var(--s3);border-radius:2px;}
+.style-card{flex-shrink:0;width:110px;background:var(--s2);border:2px solid transparent;border-radius:12px;padding:10px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.62rem;color:var(--muted);transition:border-color .2s,transform .15s,opacity .25s;text-align:center;position:relative;}
+.style-card:hover{transform:scale(1.05);}
+.style-card.sel{border-color:var(--red);color:#ff8899;}
+.style-card img{width:64px;height:64px;object-fit:contain;border-radius:8px;background:var(--s3);opacity:.85;transition:opacity .2s;}
+.style-card.sel img{opacity:1;}
+.style-card span{font-weight:500;line-height:1.3;font-size:.6rem;}
+.best-pill{position:absolute;top:4px;right:4px;background:var(--red);color:#fff;font-size:.44rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 5px;border-radius:3px;display:none;}
+.style-card.best .best-pill{display:block;}
+.style-card.best{border-color:rgba(200,16,46,.35);}
+.adj-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.adj-lbl{font-size:.7rem;color:var(--muted);min-width:44px;}
+.adj-btn{width:34px;height:34px;border-radius:8px;background:var(--s2);border:1px solid rgba(255,255,255,.07);color:var(--white);font-size:.88rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;user-select:none;}
+.adj-btn:hover{background:var(--s3);}
+.adj-btn:active{background:rgba(200,16,46,.2);transform:scale(.93);}
+.color-row{display:flex;flex-wrap:wrap;gap:10px;}
+.sw-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.sw{width:34px;height:34px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:transform .15s,border-color .15s;box-shadow:0 2px 6px rgba(0,0,0,.4);}
+.sw:hover{transform:scale(1.15);}
+.sw.sel{border-color:var(--red);box-shadow:0 0 0 1px var(--red),0 2px 8px rgba(200,16,46,.4);}
+.sw-lbl{font-size:.56rem;color:var(--muted);text-align:center;}
+.intensity-row{display:flex;align-items:center;gap:12px;}
+.intensity-row label{font-size:.72rem;color:var(--muted);white-space:nowrap;min-width:58px;}
+input[type=range]{flex:1;-webkit-appearance:none;height:4px;border-radius:2px;background:var(--s3);outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--red);cursor:pointer;box-shadow:0 0 0 3px rgba(200,16,46,.2);}
+.action-row{display:flex;gap:10px;}
+.btn-save{flex:1;padding:12px;background:var(--red);color:#fff;border:none;border-radius:var(--r);font-family:'Outfit',sans-serif;font-size:.86rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .2s,transform .1s;}
+.btn-save:hover{background:var(--red2);}
+.btn-reset{padding:12px 16px;background:var(--navy);color:var(--white);border:1px solid rgba(255,255,255,.08);border-radius:var(--r);font-family:'Outfit',sans-serif;font-size:.86rem;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
+.btn-reset:hover{background:var(--navy2);}
+.btn-rescan{padding:12px 16px;background:var(--navy);color:var(--white);border:1px solid rgba(255,255,255,.08);border-radius:var(--r);font-family:'Outfit',sans-serif;font-size:.86rem;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
+.btn-rescan:hover{background:var(--navy2);}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy);border:1px solid var(--red);color:var(--white);padding:10px 22px;border-radius:50px;font-size:.82rem;transition:transform .35s cubic-bezier(.34,1.56,.64,1);z-index:9999;white-space:nowrap;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+#loader{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10000;transition:opacity .5s;}
+#loader.gone{opacity:0;pointer-events:none;}
+.loader-bar{width:200px;height:3px;background:var(--s3);border-radius:2px;overflow:hidden;}
+.loader-fill{height:100%;width:0%;background:var(--red);border-radius:2px;animation:loaderFill 2.2s ease forwards;}
+@keyframes loaderFill{to{width:100%;}}
+.loader-txt{font-size:.75rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+.color-controls{margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06);}
+.slider-row{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
+.slider-label{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);}
+.slider-label span:last-child{color:var(--off);font-weight:500;}
+@media(max-width:520px){.cat-card{width:calc(50vw - 30px);}.tryon-tabs .ttab{padding:7px 14px;font-size:.75rem;}}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:4px;color:var(--red)">Fadestreet</div>
+  <div class="loader-bar"><div class="loader-fill"></div></div>
+  <div class="loader-txt">Loading AI engine…</div>
+</div>
+
+<div class="screen active" id="s-welcome">
+  <div class="stripe"></div>
+  <div class="welcome-pole">
+    <span style="background:var(--red)"></span><span style="background:#fff"></span>
+    <span style="background:var(--navy)"></span><span style="background:var(--red)"></span>
+    <span style="background:#fff"></span><span style="background:var(--navy)"></span>
+  </div>
+  <div class="logo-word">Fadestreet</div>
+  <div class="tagline">Hair Studio · Smart Style</div>
+  <button class="btn-start" onclick="goScan()">Start Your Scan</button>
+  <div class="deco-scissors">✂</div>
+</div>
+
+<div class="screen" id="s-scan">
+  <div class="stripe"></div>
+  <div class="scan-header">
+    <div>
+      <div class="scan-step-label">Step 1 of 3</div>
+      <div class="scan-step-title">Face Shape Analysis</div>
+    </div>
+  </div>
+  <div class="scan-body">
+    <div class="cam-frame">
+      <video id="scanVideo" autoplay muted playsinline width="480" height="360"></video>
+      <canvas id="scanCanvas" width="480" height="360"></canvas>
+      <div class="face-oval" id="faceOval"></div>
+      <div class="scan-line" id="scanLine"></div>
+      <div class="br tl"></div><div class="br tr"></div>
+      <div class="br bl"></div><div class="br br2"></div>
+    </div>
+    <div class="scan-progress-wrap">
+      <div class="scan-prog-label">
+        <span id="scanStatusTxt">Position your face in the oval</span>
+        <span id="scanPct">0%</span>
+      </div>
+      <div class="scan-prog-track"><div class="scan-prog-fill" id="scanFill"></div></div>
+    </div>
+    <div class="scan-hint">Keep still · Good lighting helps</div>
+  </div>
+</div>
+
+<div class="screen" id="s-reveal">
+  <div class="stripe"></div>
+  <div class="reveal-card">
+    <div class="reveal-scan-label">✦ Face Shape Detected</div>
+    <div class="reveal-shape-name" id="revealName">OVAL</div>
+    <div class="reveal-shape-sub" id="revealSub">—</div>
+    <div class="reveal-traits" id="revealTraits"></div>
+    <button class="reveal-cta" onclick="goCategory()">Choose Your Style →</button>
+  </div>
+</div>
+
+<div class="screen" id="s-category">
+  <div class="stripe"></div>
+  <div class="cat-title">What Are We Doing Today?</div>
+  <div class="cat-sub">Your <span id="catShapeName" style="color:var(--red);font-weight:600"></span> face shape is ready — pick a category</div>
+  <div class="cat-grid">
+    <div class="cat-card" onclick="goTryon('hair')">
+      <div class="cat-icon">✂</div>
+      <div class="cat-name">Haircut</div>
+      <div class="cat-desc">Try hairstyles matched to your face shape in real-time</div>
+    </div>
+    <div class="cat-card" onclick="goTryon('beard')">
+      <div class="cat-icon">🧔</div>
+      <div class="cat-name">Beard</div>
+      <div class="cat-desc">See how different beard styles frame your face</div>
+    </div>
+    <div class="cat-card" onclick="goTryon('color')">
+      <div class="cat-icon">🎨</div>
+      <div class="cat-name">Color</div>
+      <div class="cat-desc">Preview hair color changes live on your camera</div>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="s-tryon">
+  <div class="tryon-header">
+    <button class="tryon-back" onclick="goCategory()">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+      </svg>Back
+    </button>
+    <div class="tryon-logo">Fadestreet</div>
+    <div class="tryon-shape-chip">
+      <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="var(--red)"/></svg>
+      <span id="tryonShapeChip">Oval</span>
+    </div>
+  </div>
+  <div class="tryon-cam-wrap">
+    <video id="tryonVideo" autoplay muted playsinline width="640" height="480"></video>
+    <canvas id="tryonCanvas" width="640" height="480"></canvas>
+    <div class="cam-hud">● Live Preview</div>
+  </div>
+  <div class="tryon-panel">
+    <div class="tryon-tabs">
+      <button class="ttab" id="tab-hair"  onclick="switchTryonTab('hair')">✂ Hair</button>
+      <button class="ttab" id="tab-beard" onclick="switchTryonTab('beard')">🧔 Beard</button>
+      <button class="ttab" id="tab-color" onclick="switchTryonTab('color')">🎨 Color</button>
+    </div>
+    <div id="sec-hair">
+      <div class="section-lbl" style="margin-bottom:10px">Best styles for your face shape</div>
+      <div class="style-scroll" id="hairScroll"></div>
+      <div class="section-lbl" style="margin:14px 0 10px">Fine-tune</div>
+      <div class="adj-row">
+        <span class="adj-lbl">Size</span>
+        <button class="adj-btn" onclick="adj('hair','scale',.12)">＋</button>
+        <button class="adj-btn" onclick="adj('hair','scale',-.12)">－</button>
+        <span class="adj-lbl" style="margin-left:8px">Move</span>
+        <button class="adj-btn" onclick="adj('hair','y',-8)">▲</button>
+        <button class="adj-btn" onclick="adj('hair','y',8)">▼</button>
+        <button class="adj-btn" onclick="adj('hair','x',-8)">◀</button>
+        <button class="adj-btn" onclick="adj('hair','x',8)">▶</button>
+      </div>
+    </div>
+    <div id="sec-beard" style="display:none">
+      <div class="section-lbl" style="margin-bottom:10px">Beard styles</div>
+      <div class="style-scroll" id="beardScroll"></div>
+      <div class="section-lbl" style="margin:14px 0 10px">Fine-tune</div>
+      <div class="adj-row">
+        <span class="adj-lbl">Size</span>
+        <button class="adj-btn" onclick="adj('beard','scale',.12)">＋</button>
+        <button class="adj-btn" onclick="adj('beard','scale',-.12)">－</button>
+        <span class="adj-lbl" style="margin-left:8px">Move</span>
+        <button class="adj-btn" onclick="adj('beard','y',-8)">▲</button>
+        <button class="adj-btn" onclick="adj('beard','y',8)">▼</button>
+        <button class="adj-btn" onclick="adj('beard','x',-8)">◀</button>
+        <button class="adj-btn" onclick="adj('beard','x',8)">▶</button>
+      </div>
+    </div>
+    <div id="sec-color" style="display:none">
+      <div class="section-lbl" style="margin-bottom:10px">Hair Color</div>
+      <div class="color-row" id="colorRow"></div>
+      <div class="color-controls">
+        <div class="slider-row">
+          <div class="slider-label"><span>Opacity</span><span id="opVal">65%</span></div>
+          <input type="range" id="colorOpacity" min="10" max="100" value="65" oninput="updateColorOpacity(this.value)">
+        </div>
+        <div class="slider-row">
+          <div class="slider-label"><span>Edge Softness</span><span id="blurVal">3px</span></div>
+          <input type="range" id="colorBlur" min="0" max="12" value="3" oninput="updateColorBlur(this.value)">
+        </div>
+        <div class="slider-row">
+          <div class="slider-label"><span>Threshold</span><span id="thrVal">0.25</span></div>
+          <input type="range" id="colorThreshold" min="5" max="80" value="25" oninput="updateColorThreshold(this.value)">
+        </div>
+      </div>
+    </div>
+    <div class="action-row">
+      <button class="btn-save" onclick="savePhoto()">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+        </svg>Save Photo
+      </button>
+      <button class="btn-reset" onclick="resetAll()">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
+        </svg>Reset
+      </button>
+      <button class="btn-rescan" onclick="goScan()">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>Rescan
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CONFIGURATION
+// ═══════════════════════════════════════════════════════
+const WASM_URL  = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm';
+const MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite';
+const HAIR_IDX  = 1;
+
+// ═══════════════════════════════════════════════════════
+// ① ASSET MAP
+// ═══════════════════════════════════════════════════════
+const SHAPE_TO_FOLDER = {
+  oval:    'Oval',
+  round:   'Round',
+  square:  'Square',
+  oblong:  'Rectangle',
+  heart:   'Triangle',
+  diamond: 'Diamond',
+};
+
+const HAIR_FILES = {
+  Oval:      ['Crew_cut.png',         'Pompadour_cut.png',     'Side_Part_cut.png'],
+  Round:     ['High_Fade_cut.png',    'Pompadour_cut.png',     'Textured_Crop_cut.png'],
+  Square:    ['Side_Part_cut.png',    'Spiky_cut.png',         'Two_Block_cut.png'],
+  Rectangle: ['Curly_Fringe_cut.png', 'Quiff_cut.png',        'Side_Part_cut.png'],
+  Triangle:  ['Pompadour_cut.png',    'Quiff_cut.png',         'Textured_Crop_cut.png'],
+  Diamond:   ['Comma_cut.png',        'Fringe_cut.png',        'Pompadour_cut.png'],
+};
+
+const BEARD_FILES = ['goatee.png', 'stubble.png'];
+
+const IMG_CACHE = {};
+
+// ═══════════════════════════════════════════════════════
+// COLOR PRESETS
+// ═══════════════════════════════════════════════════════
+const COLOR_PRESETS = [
+  { hex:'#1a0a00', label:'Ebony' },       { hex:'#3b1a08', label:'Espresso' },
+  { hex:'#6b3a1f', label:'Chestnut' },    { hex:'#c47c3e', label:'Caramel' },
+  { hex:'#f5c878', label:'Honey Blonde' },{ hex:'#e8e0c8', label:'Platinum' },
+  { hex:'#c0392b', label:'Cherry Red' },  { hex:'#e07b39', label:'Copper' },
+  { hex:'#8b5cf6', label:'Violet' },      { hex:'#3b82f6', label:'Electric Blue' },
+  { hex:'#e65c9c', label:'Pink' },        { hex:'#10b981', label:'Emerald' },
+  { hex:'#f59e0b', label:'Golden' },      { hex:'#ec4899', label:'Hot Pink' },
+  { hex:'#f97316', label:'Sunset' },
+];
+
+// ═══════════════════════════════════════════════════════
+// SHAPE META
+// ═══════════════════════════════════════════════════════
+const SHAPE_DATA = {
+  oval:    { label:'Oval',    sub:'Balanced proportions with a slightly narrower chin. The most versatile face shape.', traits:['Well-balanced','Versatile','Classic'] },
+  round:   { label:'Round',   sub:'Soft angles with width and height nearly equal. Volume at the top works best.',      traits:['Full cheeks','Soft jawline','Wide forehead'] },
+  square:  { label:'Square',  sub:'Strong jaw matching forehead width. Structured cuts enhance your look.',             traits:['Strong jaw','Defined angles','Broad forehead'] },
+  oblong:  { label:'Oblong',  sub:'Face length notably exceeds width. Side volume adds balance.',                       traits:['Long face','Narrow cheeks','Defined chin'] },
+  heart:   { label:'Heart',   sub:'Wider forehead tapering to a narrow chin. Side volume at the jaw balances well.',    traits:['Wide forehead','Narrow chin','High cheekbones'] },
+  diamond: { label:'Diamond', sub:'Narrow forehead and jaw with wide cheekbones. Volume at top and bottom balances.',  traits:['Wide cheekbones','Narrow forehead','Angular'] },
+};
+
+// ═══════════════════════════════════════════════════════
+// APP STATE
+// ═══════════════════════════════════════════════════════
+let detectedShape = null;
+let currentTab    = 'hair';
+let isOnTryon     = false;
+let tryonRunning  = false;
+let hairState     = { img:null, enabled:false, scale:0, offsetX:0, offsetY:0 };
+let beardState    = { img:null, enabled:false, scale:0, offsetX:0, offsetY:0 };
+let colorState    = { enabled:false, hue:0, sat:0, intensity:.65, opacity:.65, blurPx:3, threshold:.25 };
+let segMask       = null;
+let faceBox       = null;
+let frameCount    = 0;
+let hairOffsetY   = -45;
+let hairScale     = 1.85;
+
+// Scan state
+let scanProgress=0, scanStable=0, scanComplete=false, scanMesh=null, scanCamera=null;
+const scanCanvas=document.getElementById('scanCanvas');
+const scanCtx=scanCanvas.getContext('2d');
+const scanVideo=document.getElementById('scanVideo');
+
+// Tryon state
+let tryonMesh=null, tryonSelfie=null, tryonCamera=null;
+const tryonVideo=document.getElementById('tryonVideo');
+const tryonCanvas=document.getElementById('tryonCanvas');
+const tryonCtx=tryonCanvas.getContext('2d',{willReadFrequently:true});
+const segCanvas=document.createElement('canvas');
+segCanvas.width=640; segCanvas.height=480;
+const segCtx=segCanvas.getContext('2d',{willReadFrequently:true});
+
+// ═══════════════════════════════════════════════════════
+// HELPER FUNCTIONS
+// ═══════════════════════════════════════════════════════
+function toLabel(filename) {
+  return filename
+    .replace(/_cut\.png$/i, '')
+    .replace(/\.png$/i, '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function preloadImage(src) {
+  if (IMG_CACHE[src]) return Promise.resolve(IMG_CACHE[src]);
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload  = () => { IMG_CACHE[src] = img; resolve(img); };
+    img.onerror = () => { IMG_CACHE[src] = img; console.warn('Missing asset:', src); resolve(img); };
+    img.src = src;
+  });
+}
+
+function hexToRgb(hex) {
+  const n = parseInt(hex.replace('#',''), 16);
+  return { r:(n>>16)&255, g:(n>>8)&255, b:n&255 };
+}
+
+function rgbToHsl(r,g,b){
+  r/=255;g/=255;b/=255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b);
+  let h=0,s=0,l=(mx+mn)/2;
+  if(mx!==mn){
+    const d=mx-mn;
+    s=l>.5?d/(2-mx-mn):d/(mx+mn);
+    switch(mx){
+      case r:h=(g-b)/d+(g<b?6:0);break;
+      case g:h=(b-r)/d+2;break;
+      case b:h=(r-g)/d+4;break;
+    }
+    h/=6;
+  }
+  return[h*360,s,l];
+}
+
+function hslToRgb(h,s,l){
+  h/=360;
+  let r,g,b;
+  if(!s){
+    r=g=b=l;
+  }else{
+    const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;
+    const f=(p,q,t)=>{
+      if(t<0)t+=1;
+      if(t>1)t-=1;
+      if(t<1/6)return p+(q-p)*6*t;
+      if(t<.5)return q;
+      if(t<2/3)return p+(q-p)*(2/3-t)*6;
+      return p;
+    };
+    r=f(p,q,h+1/3);
+    g=f(p,q,h);
+    b=f(p,q,h-1/3);
+  }
+  return[r*255|0,g*255|0,b*255|0];
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(window.toastTimer);
+  window.toastTimer=setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+// ═══════════════════════════════════════════════════════
+// ASSET LOADING
+// ═══════════════════════════════════════════════════════
+async function loadHairStyles(shape) {
+  const folder = SHAPE_TO_FOLDER[shape] || 'Oval';
+  const files  = HAIR_FILES[folder] || [];
+  return Promise.all(files.map(async (file, idx) => {
+    const src = 'Hairstyles/' + folder + '/' + file;
+    const img = await preloadImage(src);
+    return { id: idx+1, label: toLabel(file), src, img };
+  }));
+}
+
+async function loadBeardStyles() {
+  return Promise.all(BEARD_FILES.map(async (file, idx) => {
+    const src = 'Beardtrims/' + file;
+    const img = await preloadImage(src);
+    return { id: idx+1, label: toLabel(file), src, img };
+  }));
+}
+
+// ═══════════════════════════════════════════════════════
+// FACE SHAPE CLASSIFICATION
+// ═══════════════════════════════════════════════════════
+function classifyShape(lm, W, H) {
+  const px = pt => ({x:(1-pt.x)*W, y:pt.y*H});
+  const d  = (a,b) => Math.hypot(a.x-b.x, a.y-b.y);
+  const fl=d(px(lm[10]),px(lm[152])), cw=d(px(lm[234]),px(lm[454]));
+  const jw=d(px(lm[172]),px(lm[397])), fw=d(px(lm[70]),px(lm[300]));
+  const lw=fl/cw, jc=jw/cw, fc=fw/cw;
+  if(lw<1.15&&jc>.75) return 'round';
+  if(jc>.85&&fc>.85&&lw<1.35) return 'square';
+  if(lw>1.5) return 'oblong';
+  if(fc>.92&&jc<.75) return 'heart';
+  return 'oval';
+}
+
+// ═══════════════════════════════════════════════════════
+// SCAN SCREEN FUNCTIONS
+// ═══════════════════════════════════════════════════════
+function goScan() {
+  console.log('[Fadestreet] Starting scan...');
+  scanProgress=0;
+  scanStable=0;
+  scanComplete=false;
+  hairState     = { img:null, enabled:false, scale:0, offsetX:0, offsetY:0 };
+  beardState    = { img:null, enabled:false, scale:0, offsetX:0, offsetY:0 };
+  colorState    = { enabled:false, hue:0, sat:0, intensity:.65, opacity:.65, blurPx:3, threshold:.25 };
+  
+  document.getElementById('scanFill').style.width='0%';
+  document.getElementById('scanPct').textContent='0%';
+  document.getElementById('faceOval').classList.remove('locked');
+  document.getElementById('scanStatusTxt').textContent='Position your face in the oval';
+  
+  switchScreen('s-scan');
+  startScanPipeline();
+}
+
+function startScanPipeline() {
+  if (scanCamera) {
+    console.log('[Fadestreet] Scan camera already active');
+    document.getElementById('scanLine').classList.add('active');
+    return;
+  }
+  
+  console.log('[Fadestreet] Requesting camera...');
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:480,height:360},audio:false})
+    .then(stream => {
+      console.log('[Fadestreet] Camera stream obtained');
+      scanVideo.srcObject = stream;
+      scanVideo.onloadedmetadata = () => {
+        console.log('[Fadestreet] Scan video metadata loaded, initializing FaceMesh');
+        scanMesh = new FaceMesh({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
+        scanMesh.setOptions({maxNumFaces:1,refineLandmarks:false,minDetectionConfidence:.55,minTrackingConfidence:.55});
+        scanMesh.onResults(onScanResults);
+        scanCamera = new Camera(scanVideo, {
+          onFrame: async()=>{ if(!scanComplete) await scanMesh.send({image:scanVideo}); },
+          width:480, height:360
+        });
+        scanCamera.start();
+        console.log('[Fadestreet] Scan camera started successfully');
+        document.getElementById('scanLine').classList.add('active');
+      };
+    })
+    .catch(err=>{
+      console.error('[Fadestreet] Camera error:', err);
+      showToast('⚠ Camera access denied');
+    });
+}
+
+function onScanResults(results) {
+  scanCtx.clearRect(0,0,480,360);
+  scanCtx.save();
+  scanCtx.scale(-1,1);
+  scanCtx.drawImage(scanVideo,-480,0,480,360);
+  scanCtx.restore();
+  
+  const hasFace = results.multiFaceLandmarks?.length > 0;
+  
+  if (hasFace) {
+    scanStable = Math.min(scanStable+1, 60);
+    detectedShape = classifyShape(results.multiFaceLandmarks[0], 480, 360);
+    if (scanStable>10) scanProgress = Math.min(scanProgress+1.4, 100);
+  } else {
+    scanStable  = Math.max(0, scanStable-3);
+    scanProgress= Math.max(0, scanProgress-.8);
+    detectedShape=null;
+  }
+  
+  document.getElementById('scanFill').style.width = scanProgress+'%';
+  document.getElementById('scanPct').textContent  = Math.round(scanProgress)+'%';
+  
+  const oval=document.getElementById('faceOval');
+  if (!hasFace) {
+    document.getElementById('scanStatusTxt').textContent='Position your face in the oval';
+    oval.classList.remove('locked');
+  } else if (scanProgress<100) {
+    document.getElementById('scanStatusTxt').textContent='Hold still… scanning';
+    oval.classList.add('locked');
+  }
+  
+  if (scanProgress>=100 && !scanComplete) {
+    scanComplete=true;
+    oval.classList.add('locked');
+    document.getElementById('scanLine').classList.remove('active');
+    document.getElementById('scanStatusTxt').textContent='✓ Face shape identified!';
+    console.log('[Fadestreet] Face scan complete:', detectedShape);
+    setTimeout(showReveal, 700);
+  }
+}
+
+function showReveal() {
+  const d=SHAPE_DATA[detectedShape]||SHAPE_DATA.oval;
+  document.getElementById('revealName').textContent=d.label.toUpperCase();
+  document.getElementById('revealSub').textContent=d.sub;
+  document.getElementById('revealTraits').innerHTML=d.traits.map(t=>`<div class="trait-pill">${t}</div>`).join('');
+  switchScreen('s-reveal');
+}
+
+function goCategory() {
+  document.getElementById('catShapeName').textContent=SHAPE_DATA[detectedShape]?.label||'';
+  switchScreen('s-category');
+}
+
+// ═══════════════════════════════════════════════════════
+// TRY-ON FUNCTIONS
+// ═══════════════════════════════════════════════════════
+async function goTryon(cat) {
+  currentTab=cat;
+  isOnTryon=true;
+  document.getElementById('tryonShapeChip').textContent=SHAPE_DATA[detectedShape]?.label||'';
+  showToast('Loading styles…');
+
+  const [hairStyles, beardStyles] = await Promise.all([
+    loadHairStyles(detectedShape),
+    loadBeardStyles(),
+  ]);
+
+  buildStyleGrid('hairScroll',  hairStyles,  'h', s=>selectOverlay('hair', s));
+  buildStyleGrid('beardScroll', beardStyles, 'b', s=>selectOverlay('beard', s));
+  buildColorRow();
+  switchTryonTab(cat);
+  switchScreen('s-tryon');
+  startTryonPipeline();
+}
+
+function startTryonPipeline() {
+  if (tryonRunning) return;
+  tryonRunning=true;
+  
+  console.log('[Fadestreet] Starting tryon pipeline');
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:640,height:480},audio:false})
+    .then(s=>{
+      tryonVideo.srcObject=s;
+      tryonVideo.onloadedmetadata=()=>{
+        console.log('[Fadestreet] Tryon video loaded');
+        initTryonMesh();
+      };
+    })
+    .catch(err=>{
+      console.error('[Fadestreet] Camera error:', err);
+      showToast('⚠ Camera access denied');
+    });
+}
+
+function initTryonMesh() {
+  console.log('[Fadestreet] Initializing tryon mesh');
+  tryonMesh=new FaceMesh({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
+  tryonMesh.setOptions({maxNumFaces:1,refineLandmarks:false,minDetectionConfidence:.5,minTrackingConfidence:.5});
+  tryonMesh.onResults(onTryonMeshResults);
+
+  tryonSelfie=new SelfieSegmentation({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${f}`});
+  tryonSelfie.setOptions({modelSelection:1});
+  tryonSelfie.onResults(r=>{
+    segCtx.clearRect(0,0,640,480);
+    segCtx.drawImage(r.segmentationMask,0,0,640,480);
+    segMask=segCtx.getImageData(0,0,640,480);
+  });
+
+  tryonCamera=new Camera(tryonVideo,{
+    onFrame:async()=>{
+      await tryonMesh.send({image:tryonVideo});
+      if(colorState.enabled&&frameCount%3===0) await tryonSelfie.send({image:tryonVideo});
+    },
+    width:640,height:480
+  });
+  tryonCamera.start();
+  console.log('[Fadestreet] Tryon mesh initialized');
+  requestAnimationFrame(tryonRenderLoop);
+}
+
+function onTryonMeshResults(results) {
+  frameCount++;
+  tryonCtx.save();
+  tryonCtx.scale(-1,1);
+  tryonCtx.drawImage(tryonVideo,-640,0,640,480);
+  tryonCtx.restore();
+  
+  if(!results.multiFaceLandmarks?.length){faceBox=null;return;}
+  
+  const lm=results.multiFaceLandmarks[0];
+  const W=640,H=480;
+  const px=pt=>({x:(1-pt.x)*W,y:pt.y*H});
+  const TOP=px(lm[10]),CHIN=px(lm[152]),L=px(lm[234]),R=px(lm[454]);
+  const faceH=CHIN.y-TOP.y;
+  faceBox={fx1:Math.min(L.x,R.x),fx2:Math.max(L.x,R.x),faceTop:TOP.y,faceChin:CHIN.y,faceH};
+
+  const mx=pt=>(1-pt.x)*W;
+  const xTop=mx(lm[10]),yTop=lm[10].y*H;
+  const xChin=mx(lm[152]),yChin=lm[152].y*H;
+  const fW=Math.abs(mx(lm[454])-mx(lm[234]));
+  const yShift=({oval:0,round:-faceH*.03,square:0,oblong:-faceH*.05,heart:-faceH*.02})[detectedShape]||0;
+
+  // Draw hair
+  if(hairState.enabled && hairState.img?.naturalWidth){
+    const baseScale = hairScale + hairState.scale;
+    const hw=fW*baseScale;
+    tryonCtx.drawImage(hairState.img,xTop-hw/2+hairState.offsetX,yTop+hairOffsetY+hairState.offsetY+yShift,hw,hw);
+  }
+  
+  // Draw beard
+  if(beardState.enabled && beardState.img?.naturalWidth){
+    const bw=fW*(1.2+beardState.scale);
+    tryonCtx.drawImage(beardState.img,xChin-bw/2+beardState.offsetX,yChin-bw*.28+beardState.offsetY,bw,bw);
+  }
+}
+
+function tryonRenderLoop() {
+  requestAnimationFrame(tryonRenderLoop);
+  if(!isOnTryon) return;
+  if(colorState.enabled&&faceBox&&segMask&&frameCount%2===0) applyColor();
+}
+
+// ═══════════════════════════════════════════════════════
+// COLOR APPLICATION
+// ═══════════════════════════════════════════════════════
+function applyColor(){
+  const W = 640, H = 480;
+
+  // create offscreen canvas (like ColorAR)
+  if (!window.colorCanvas) {
+    window.colorCanvas = document.createElement('canvas');
+    window.colorCanvas.width = W;
+    window.colorCanvas.height = H;
+    window.colorCtx = window.colorCanvas.getContext('2d');
+  }
+
+  const offCtx = window.colorCtx;
+
+  const imgData = offCtx.createImageData(W, H);
+  const px = imgData.data;
+  const seg = segMask.data;
+
+  const {fx1, fx2, faceTop, faceH} = faceBox;
+
+  const hx1 = fx1 - faceH * 0.2;
+  const hx2 = fx2 + faceH * 0.2;
+  const hy1 = faceTop - faceH * 0.55;
+  const hy2 = faceTop + faceH * 0.22;
+
+  const [r, g, b] = hslToRgb(colorState.hue, colorState.sat, 0.5);
+
+  for(let y = 0; y < H; y++){
+    if(y < hy1 || y > hy2) continue;
+
+    for(let x = 0; x < W; x++){
+      if(x < hx1 || x > hx2) continue;
+
+      const i = (y * W + x) * 4;
+
+      // segmentation confidence
+      const conf = seg[i] / 255;
+      if(conf < colorState.threshold) continue;
+
+      // smooth alpha like ColorAR
+      const alpha = Math.min(1, (conf - colorState.threshold) / (1 - colorState.threshold)) * colorState.opacity;
+
+      px[i]     = r;
+      px[i + 1] = g;
+      px[i + 2] = b;
+      px[i + 3] = alpha * 255;
+    }
+  }
+
+  offCtx.putImageData(imgData, 0, 0);
+
+  // blur edges (CRITICAL for quality)
+  if (colorState.blurPx > 0) {
+    const temp = document.createElement('canvas');
+    temp.width = W;
+    temp.height = H;
+    const tctx = temp.getContext('2d');
+    tctx.filter = `blur(${colorState.blurPx}px)`;
+    tctx.drawImage(colorCanvas, 0, 0);
+
+    offCtx.clearRect(0, 0, W, H);
+    offCtx.drawImage(temp, 0, 0);
+  }
+
+  // blend onto main canvas
+  tryonCtx.save();
+  tryonCtx.globalCompositeOperation = 'color'; // same as ColorAR
+  tryonCtx.drawImage(colorCanvas, 0, 0);
+  tryonCtx.restore();
+}
+
+// ═══════════════════════════════════════════════════════
+// STYLE GRID & COLOR ROW
+// ═══════════════════════════════════════════════════════
+function buildStyleGrid(containerId, styles, prefix, onSelect) {
+  const c=document.getElementById(containerId);
+  c.innerHTML='';
+  styles.forEach((s,idx)=>{
+    const card=document.createElement('div');
+    const isBest=idx===0;
+    card.className='style-card'+(isBest?' best':'');
+    card.id=`${prefix}-${s.id}`;
+    const hasImg=s.img?.naturalWidth>0;
+    card.innerHTML=hasImg
+      ? `<img src="${s.src}" alt="${s.label}"><span>${s.label}</span><div class="best-pill">Best</div>`
+      : `<svg viewBox="0 0 48 48" fill="currentColor" style="width:32px;height:32px;opacity:.4"><ellipse cx="24" cy="17" rx="14" ry="10"/></svg><span>${s.label}</span><div class="best-pill">Best</div>`;
+    card.onclick=()=>{
+      c.querySelectorAll('.style-card').forEach(el=>el.classList.remove('sel'));
+      card.classList.add('sel');
+      onSelect(s);
+    };
+    c.appendChild(card);
+  });
+}
+
+function buildColorRow(){
+  const row=document.getElementById('colorRow');
+  row.innerHTML='';
+  COLOR_PRESETS.forEach((c,i)=>{
+    const w=document.createElement('div');
+    w.className='sw-wrap';
+    const s=document.createElement('div');
+    s.className='sw';
+    s.style.background=c.hex;
+    s.id=`sw-${i}`;
+    s.onclick=()=>pickColor(c,i);
+    const l=document.createElement('div');
+    l.className='sw-lbl';
+    l.textContent=c.label;
+    w.append(s,l);
+    row.appendChild(w);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// SELECTION & CONTROLS
+// ═══════════════════════════════════════════════════════
+function selectOverlay(type, style) {
+  if (type === 'hair') {
+    beardState = { img:null, enabled:false, scale:0, offsetX:0, offsetY:0 };
+    document.querySelectorAll('#beardScroll .style-card').forEach(el=>el.classList.remove('sel'));
+  } else if (type === 'beard') {
+    hairState = { img:null, enabled:false, scale:0, offsetX:0, offsetY:0 };
+    document.querySelectorAll('#hairScroll .style-card').forEach(el=>el.classList.remove('sel'));
+  }
+  
+  const st=type==='hair'?hairState:beardState;
+  st.enabled=true;
+  st.img=style.img;
+  st.offsetX=0;
+  st.offsetY=0;
+  showToast((type==='hair'?'✂ ':'🧔 ')+style.label);
+}
+
+function pickColor(c,i){
+  document.querySelectorAll('.sw').forEach(s=>s.classList.remove('sel'));
+  document.getElementById(`sw-${i}`)?.classList.add('sel');
+  const rgb = hexToRgb(c.hex);
+  const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+  colorState.enabled=true;
+  colorState.hue=hsl[0];
+  colorState.sat=hsl[1];
+  showToast('Color: '+c.label);
+}
+
+function updateColorOpacity(val) {
+  colorState.opacity = val / 100;
+  document.getElementById('opVal').textContent = val + '%';
+}
+
+function updateColorBlur(val) {
+  colorState.blurPx = parseInt(val);
+  document.getElementById('blurVal').textContent = val + 'px';
+}
+
+function updateColorThreshold(val) {
+  colorState.threshold = val / 100;
+  document.getElementById('thrVal').textContent = (val/100).toFixed(2);
+}
+
+function adj(type,prop,val){
+  const st=type==='hair'?hairState:beardState;
+  if(prop==='scale') st.scale=Math.max(0,st.scale+val);
+  else if(prop==='x') st.offsetX+=val;
+  else st.offsetY+=val;
+}
+
+function switchTryonTab(tab){
+  currentTab=tab;
+  ['hair','beard','color'].forEach(t=>{
+    document.getElementById(`tab-${t}`).classList.toggle('active',t===tab);
+    document.getElementById(`sec-${t}`).style.display=t===tab?'block':'none';
+  });
+}
+
+function switchScreen(id){
+  isOnTryon=id==='s-tryon';
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function savePhoto(){
+  const snap=document.createElement('canvas');
+  snap.width=640;
+  snap.height=480;
+  const sc=snap.getContext('2d');
+  sc.drawImage(tryonCanvas,0,0);
+  sc.fillStyle='rgba(255,255,255,.15)';
+  sc.font='bold 14px sans-serif';
+  sc.textAlign='right';
+  sc.fillText('Fadestreet',snap.width-12,snap.height-12);
+  const a=document.createElement('a');
+  a.download=`Fadestreet_${Date.now()}.png`;
+  a.href=snap.toDataURL();
+  a.click();
+  showToast('📸 Photo saved!');
+}
+
+function resetAll(){
+  hairState ={img:null,enabled:false,scale:0,offsetX:0,offsetY:0};
+  beardState={img:null,enabled:false,scale:0,offsetX:0,offsetY:0};
+  colorState={enabled:false,hue:0,sat:0,intensity:.65,opacity:.65,blurPx:3,threshold:.25};
+  document.getElementById('colorOpacity').value=65;
+  document.getElementById('colorBlur').value=3;
+  document.getElementById('colorThreshold').value=25;
+  document.getElementById('opVal').textContent='65%';
+  document.getElementById('blurVal').textContent='3px';
+  document.getElementById('thrVal').textContent='0.25';
+  document.querySelectorAll('.style-card,.sw').forEach(el=>el.classList.remove('sel'));
+  showToast('Reset!');
+}
+
+// ═══════════════════════════════════════════════════════
+// INITIALIZATION
+// ═══════════════════════════════════════════════════════
+console.log('[Fadestreet] App initialized');
+setTimeout(()=>{
+  document.getElementById('loader').classList.add('gone');
+  console.log('[Fadestreet] Ready for use!');
+}, 2400);
+</script>
+</body>
+</html>
